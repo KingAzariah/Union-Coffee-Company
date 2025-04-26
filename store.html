@@ -292,7 +292,7 @@
     let stripe, card;
     function setupStripe() {
         if (stripe && card) return; // Only initialize once
-        stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+        stripe = Stripe(pk_live_51KcLrIFdbFCU2eTH0xkUusYDE1ztKNUBJPcnZZyesrfg7aGOjuZLH9KhZATVqVnFov3rwWOwpydEMFOhgrJgngT500zC4Wv2C0);
         const elements = stripe.elements();
         card = elements.create('card', {style:{base:{fontSize:'16px'}}});
         card.mount("#stripe-card-element");
