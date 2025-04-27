@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <!--
-    Spectral by HTML5 UP (modified for Union Coffee Co. Order Ahead)
+    Spectral by HTML5 UP (modified for Union Coffee Co. Order Ahead with modern menu/modal)
 -->
 <html>
 <head>
@@ -12,13 +12,13 @@
     <!-- Stripe.js (Test Mode) -->
     <script src="https://js.stripe.com/v3/"></script>
     <style>
-        /* Minimal additional styling for cart/modal */
-        #cart-modal, #checkout-modal, #orders-modal {
+        /* Minimal additional styling for cart/modal/menu cards */
+        #cart-modal, #checkout-modal, #orders-modal, #item-modal {
             display: none;
             position: fixed;
             z-index: 10001;
             left: 0; top: 0;
-            width: 100%; height: 100%;
+            width: 100vw; height: 100vh;
             background: rgba(0,0,0,0.75);
             align-items: center; justify-content: center;
         }
@@ -27,9 +27,11 @@
             color: #333;
             border-radius: 1rem;
             max-width: 400px;
-            width: 90vw;
+            width: 92vw;
             padding: 2rem;
             box-shadow: 0 1px 16px 0 #2228;
+            position: relative;
+            text-align: center;
         }
         .close-modal {
             float: right; font-size: 1.4em; cursor: pointer;
@@ -60,6 +62,73 @@
             padding: 0.1em 0.7em;
             margin-left: 0.5em;
         }
+        /* Menu cards */
+        #menu-list {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 2rem;
+        }
+        .menu-card {
+            background: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 1px 8px #3333;
+            width: 220px;
+            min-height: 320px;
+            padding: 1.2em;
+            margin: 0.5em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: box-shadow .15s;
+        }
+        .menu-card:hover {
+            box-shadow: 0 2px 18px #5435;
+        }
+        .menu-card img {
+            width: 110px; height: 110px; object-fit: cover;
+            border-radius: 1em; margin-bottom: 0.9em;
+            box-shadow: 0 1px 8px #3333;
+        }
+        .menu-card button, #item-modal-add-btn {
+            margin-top: auto;
+            background: #684321;
+            color: #fff;
+            border: none;
+            border-radius: 0.8em;
+            padding: 0.5em 1.2em;
+            font-size: 1em;
+            box-shadow: 0 1px 8px #3333;
+            cursor: pointer;
+            transition: background 0.18s;
+        }
+        .menu-card button:hover, #item-modal-add-btn:hover {
+            background: #ed8936;
+            color: #fff;
+        }
+        /* Add-in buttons */
+        #item-modal-addins button {
+            margin: 0.2em 0.5em;
+            background: #ddd;
+            border: none;
+            border-radius: 1em;
+            padding: 0.3em 1em;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.15s;
+        }
+        #item-modal-addins button.selected {
+            background: #ed8936 !important;
+            color: #fff;
+        }
+        @media (max-width: 700px) {
+            #menu-list {
+                gap: 0.8rem;
+            }
+            .menu-card {
+                width: 97vw;
+                max-width: 340px;
+                min-height: 0;
+            }
+        }
     </style>
 </head>
 <body class="landing is-preload">
@@ -67,7 +136,7 @@
     <!-- Page Wrapper -->
     <div id="page-wrapper">
 
-        <!-- Header (kept from your design) -->
+        <!-- Header -->
         <header id="header" class="alt">
             <h1><a href="index.html">Union Coffee Co</a></h1>
             <nav id="nav">
@@ -86,7 +155,7 @@
             </nav>
         </header>
 
-        <!-- Banner (kept) -->
+        <!-- Banner -->
         <section id="banner">
             <div class="inner">
                 <h2>Union Coffee Co.</h2>
@@ -102,7 +171,7 @@
                     <h2>Order Coffee & Pastries Ahead</h2>
                     <p>Beat the line! Choose your favorites, select pickup time, pay securely, and grab on the go.</p>
                 </header>
-                <div id="menu-list" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 2rem;"></div>
+                <div id="menu-list"></div>
             </div>
         </section>
 
@@ -149,8 +218,20 @@
             </div>
         </div>
 
-        <!-- Rest of original sections (leave as-is for your design) -->
-        <!-- ... (keep your "One", "Two", "Three", "CTA", "Footer" sections unchanged) ... -->
+        <!-- Menu Item Detail Modal -->
+        <div id="item-modal">
+            <div class="modal-content" style="max-width:370px; width:92vw;">
+                <span class="close-modal" onclick="closeItemModal()" style="float:right;font-size:1.4em;cursor:pointer;">&times;</span>
+                <img id="item-modal-img" src="" style="width:110px;height:110px;object-fit:cover;border-radius:1em;box-shadow:0 1px 8px #3333;">
+                <h3 id="item-modal-name"></h3>
+                <div id="item-modal-desc" style="color:#765; margin-bottom:0.6em;"></div>
+                <strong style="font-size:1.2em;">$<span id="item-modal-price">0.00</span></strong>
+                <div id="item-modal-addins" style="margin:1em 0 1.2em 0;"></div>
+                <button id="item-modal-add-btn" style="background:#684321;color:#fff;border:none;border-radius:0.8em;padding:0.5em 1.3em;font-size:1em;box-shadow:0 1px 8px #3333;cursor:pointer;">Add to Cart</button>
+            </div>
+        </div>
+
+        <!-- (Your other sections e.g. footer, CTA, etc. can remain below if desired) -->
 
     </div>
 
@@ -175,22 +256,31 @@
         { id: 6, name: "Croissant", desc: "Buttery, flaky", price: 2.75, img: "images/pic03.jpg" }
     ];
 
+    const ADDINS = [
+        { name: "Coconut", price: 0.50 },
+        { name: "Almond", price: 0.65 },
+        { name: "Espresso Shot", price: 1.00 },
+        { name: "Full Fat", price: 0.00 }
+    ];
+
     const STRIPE_PUBLISHABLE_KEY = "pk_test_51NbyDeFeGZZ...YOUR_TEST_KEY_HERE..."; // <--- REPLACE with your test key!
+
     // --------------- UI RENDERING ---------------
 
-    // Render Menu
+    // Modern Menu Render with Modal Open
     function renderMenu() {
         const $menu = document.getElementById('menu-list');
         $menu.innerHTML = '';
         MENU.forEach(item => {
             const el = document.createElement('div');
-            el.style = "background:#fff; border-radius:1rem; box-shadow:0 1px 6px #3333; width:220px; padding:1.2em; display:flex; flex-direction:column; align-items:center;";
+            el.className = "menu-card";
+            el.onclick = () => showItemModal(item);
             el.innerHTML = `
-                <img src="${item.img}" alt="" style="width:100px; height:100px; object-fit:cover; border-radius:0.7em;">
-                <h4>${item.name}</h4>
-                <div style="color:#654">${item.desc}</div>
-                <strong>$${item.price.toFixed(2)}</strong>
-                <button onclick="addToCart(${item.id})" style="margin-top:0.8em;">Add to Cart</button>
+                <img src="${item.img}" alt="${item.name}">
+                <h4 style="margin:0 0 0.3em 0;">${item.name}</h4>
+                <div style="color:#654; font-size:1em; margin-bottom:0.5em;">${item.desc}</div>
+                <strong style="margin-bottom:0.7em; font-size:1.1em;">$${item.price.toFixed(2)}</strong>
+                <button onclick="event.stopPropagation();addToCart(${item.id});" style="margin-top:auto;">Add to Cart</button>
             `;
             $menu.appendChild(el);
         });
@@ -209,7 +299,46 @@
         }
     }
 
-    // --------------- CART LOGIC ---------------
+    // --------------- MENU ITEM MODAL ---------------
+    let currentModalItem = null, selectedAddIns = [];
+    function showItemModal(item) {
+        currentModalItem = item;
+        selectedAddIns = [];
+        document.getElementById('item-modal-img').src = item.img;
+        document.getElementById('item-modal-name').innerText = item.name;
+        document.getElementById('item-modal-desc').innerText = item.desc;
+        document.getElementById('item-modal-price').innerText = item.price.toFixed(2);
+
+        // Render add-ins as buttons (togglable)
+        const $addins = document.getElementById('item-modal-addins');
+        $addins.innerHTML = '';
+        ADDINS.forEach((ai, idx) => {
+            const btn = document.createElement('button');
+            btn.innerText = `${ai.name} ${ai.price > 0 ? "+$" + ai.price.toFixed(2) : ""}`;
+            btn.onclick = () => {
+                if(selectedAddIns.includes(idx)) {
+                    selectedAddIns = selectedAddIns.filter(i=>i!==idx);
+                    btn.classList.remove('selected');
+                } else {
+                    selectedAddIns.push(idx);
+                    btn.classList.add('selected');
+                }
+            };
+            $addins.appendChild(btn);
+        });
+        document.getElementById('item-modal').style.display = 'flex';
+
+        // Add-to-cart with add-ins
+        document.getElementById('item-modal-add-btn').onclick = () => {
+            addToCart(item.id, selectedAddIns.map(idx => ADDINS[idx]));
+            closeItemModal();
+        };
+    }
+    function closeItemModal() {
+        document.getElementById('item-modal').style.display = 'none';
+    }
+
+    // --------------- CART LOGIC (support add-ins) ---------------
     function getCart() {
         return JSON.parse(localStorage.getItem('ucc_cart') || "[]");
     }
@@ -217,26 +346,26 @@
         localStorage.setItem('ucc_cart', JSON.stringify(cart));
         updateCartCount();
     }
-    function addToCart(id) {
+    function addToCart(id, addins=[]) {
         let cart = getCart();
-        let found = cart.find(i => i.id === id);
+        let found = cart.find(i => i.id === id && JSON.stringify(i.addins||[])===JSON.stringify(addins));
         if(found) found.qty++;
-        else cart.push({id, qty:1});
+        else cart.push({id, qty:1, addins:addins});
         saveCart(cart);
         alert("Added to cart!");
     }
-    function removeFromCart(id) {
+    function removeFromCart(id, addins=[]) {
         let cart = getCart();
-        cart = cart.filter(i => i.id !== id);
+        cart = cart.filter(i => !(i.id === id && JSON.stringify(i.addins||[])===JSON.stringify(addins)));
         saveCart(cart);
         renderCart();
     }
-    function changeQty(id, delta) {
+    function changeQty(id, delta, addins=[]) {
         let cart = getCart();
-        let found = cart.find(i => i.id === id);
+        let found = cart.find(i => i.id === id && JSON.stringify(i.addins||[])===JSON.stringify(addins));
         if (found) {
             found.qty += delta;
-            if(found.qty < 1) removeFromCart(id);
+            if(found.qty < 1) removeFromCart(id, addins);
             else saveCart(cart);
             renderCart();
         }
@@ -265,13 +394,18 @@
             html = "<ul style='padding:0;'>";
             cart.forEach(item => {
                 let prod = MENU.find(m=>m.id===item.id);
-                total += prod.price * item.qty;
+                let itemTotal = prod.price * item.qty;
+                if(item.addins && item.addins.length) {
+                    item.addins.forEach(ai => { itemTotal += ai.price * item.qty; });
+                }
+                total += itemTotal;
                 html += `<li style="margin-bottom:0.8em;">
                     <b>${prod.name}</b> ($${prod.price.toFixed(2)})<br>
-                    Qty: <button onclick="changeQty(${item.id},-1)">-</button> 
+                    Qty: <button onclick="changeQty(${item.id},-1,${JSON.stringify(item.addins||[]).replace(/"/g,'&quot;')})">-</button> 
                     <span style="min-width:2em;display:inline-block;">${item.qty}</span>
-                    <button onclick="changeQty(${item.id},1)">+</button>
-                    <button onclick="removeFromCart(${item.id})" style="color:#a00;margin-left:1em;">Remove</button>
+                    <button onclick="changeQty(${item.id},1,${JSON.stringify(item.addins||[]).replace(/"/g,'&quot;')})">+</button>
+                    <button onclick="removeFromCart(${item.id},${JSON.stringify(item.addins||[]).replace(/"/g,'&quot;')})" style="color:#a00;margin-left:1em;">Remove</button>
+                    ${item.addins && item.addins.length ? `<br><small>Add-Ins: ${item.addins.map(ai=>ai.name).join(", ")}</small>` : ""}
                 </li>`;
             });
             html += "</ul>";
@@ -292,7 +426,7 @@
     let stripe, card;
     function setupStripe() {
         if (stripe && card) return; // Only initialize once
-        stripe = Stripe(pk_live_51KcLrIFdbFCU2eTH0xkUusYDE1ztKNUBJPcnZZyesrfg7aGOjuZLH9KhZATVqVnFov3rwWOwpydEMFOhgrJgngT500zC4Wv2C0);
+        stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
         const elements = stripe.elements();
         card = elements.create('card', {style:{base:{fontSize:'16px'}}});
         card.mount("#stripe-card-element");
@@ -304,9 +438,16 @@
         document.getElementById('stripe-error').innerText = "";
         // Calculate amount
         let cart = getCart();
-        let total = cart.reduce((sum,i) => sum + MENU.find(m=>m.id===i.id).price*i.qty,0);
+        let total = 0;
+        cart.forEach(item => {
+            let prod = MENU.find(m=>m.id===item.id);
+            let itemTotal = prod.price * item.qty;
+            if(item.addins && item.addins.length) {
+                item.addins.forEach(ai => { itemTotal += ai.price * item.qty; });
+            }
+            total += itemTotal;
+        });
         // Simulate a Stripe PaymentIntent (no backend)
-        // Instead, use Stripe test card & client-only confirmation
         const {paymentMethod, error} = await stripe.createPaymentMethod({
             type: 'card',
             card: card,
@@ -322,7 +463,7 @@
             name: document.getElementById('cust-name').value,
             time: new Date().toLocaleString(),
             pickup: new Date(document.getElementById('pickup-time').value).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-            cart: cart.map(item => ({...item, ...MENU.find(m=>m.id===item.id)})),
+            cart: cart,
             total: total
         });
         localStorage.removeItem('ucc_cart');
@@ -348,7 +489,7 @@
             html += `<li>
                 <b>${ord.name}</b> @ ${ord.time}<br>
                 Pickup: <b>${ord.pickup}</b><br>
-                Items:<ul>${ord.cart.map(it=>`<li>${it.qty}x ${it.name}</li>`).join("")}</ul>
+                Items:<ul>${ord.cart.map(it=>`<li>${it.qty}x ${MENU.find(m=>m.id===it.id).name}${it.addins && it.addins.length ? ` <small>[${it.addins.map(ai=>ai.name).join(", ")}]</small>` : ""}</li>`).join("")}</ul>
                 <strong>Total: $${ord.total.toFixed(2)}</strong>
             </li><hr>`;
         });
